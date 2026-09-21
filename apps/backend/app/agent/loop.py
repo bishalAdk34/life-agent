@@ -4,14 +4,18 @@ from datetime import datetime, timezone
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.agent.providers.base import LLMMessage, LLMProvider
+from app.agent.providers.base import LLMProvider, Turn
+from app.agent.tools.registry import TOOL_REGISTRY
 from app.models.conversation import Conversation, ConversationMessage, MessageRole
 
 SYSTEM_INSTRUCTION = (
     "You are Life Agent, a helpful personal assistant. Respond concisely and "
-    "conversationally. You do not yet have access to the user's tasks, "
-    "routines, or other data — do not claim to know anything about them."
+    "conversationally. Use the available tools to look up or modify the "
+    "user's real tasks and schedule instead of guessing — never invent task "
+    "or schedule details you did not get from a tool."
 )
+
+MAX_TOOL_ROUNDS = 5
 
 
 def _get_or_create_conversation(
@@ -51,12 +55,12 @@ def handle_message(
         .all()
     )
 
-    llm_messages = [
-        LLMMessage(role=m.role.value, content=m.content)
+    turns = [
+        Turn(role=m.role.value, text=m.content)
         for m in history
         if m.role in (MessageRole.user, MessageRole.assistant)
     ]
-    llm_messages.append(LLMMessage(role="user", content=message))
+    turns.append(Turn(role="user", text=message))
 
     db.add(
         ConversationMessage(
@@ -64,16 +68,38 @@ def handle_message(
         )
     )
 
-    response = provider.generate(llm_messages, system_instruction=SYSTEM_INSTRUCTION)
+    tool_declarations = [t.declaration for t in TOOL_REGISTRY.values()]
+
+    final_text = "Sorry, I couldn't complete that request."
+    for _ in range(MAX_TOOL_ROUNDS):
+        response = provider.generate(
+            turns, tools=tool_declarations, system_instruction=SYSTEM_INSTRUCTION
+        )
+        if not response.tool_calls:
+            final_text = response.text or ""
+            break
+
+        turns.append(
+            Turn(role="assistant", tool_calls=response.tool_calls, raw=response.raw)
+        )
+        for call in response.tool_calls:
+            tool = TOOL_REGISTRY.get(call.name)
+            if tool is None:
+                result = {"error": f"unknown tool '{call.name}'"}
+            else:
+                result = tool.handler(db, user_id, call.args)
+            turns.append(
+                Turn(role="tool", tool_name=call.name, tool_response=result)
+            )
 
     db.add(
         ConversationMessage(
             conversation_id=conversation.id,
             role=MessageRole.assistant,
-            content=response.text,
+            content=final_text,
         )
     )
     conversation.last_message_at = datetime.now(timezone.utc)
 
     db.commit()
-    return conversation.id, response.text
+    return conversation.id, final_text

@@ -43,6 +43,16 @@ export default function Home() {
           <Text style={styles.linkText}>Routines</Text>
         </Pressable>
       </Link>
+      <Link href="/activities" asChild>
+        <Pressable style={styles.link}>
+          <Text style={styles.linkText}>Activities</Text>
+        </Pressable>
+      </Link>
+      <Link href="/expenses" asChild>
+        <Pressable style={styles.link}>
+          <Text style={styles.linkText}>Expenses</Text>
+        </Pressable>
+      </Link>
 
       <Pressable style={styles.logout} onPress={logout}>
         <Text style={styles.logoutText}>Log out</Text>

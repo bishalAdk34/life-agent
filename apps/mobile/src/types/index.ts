@@ -55,6 +55,39 @@ export interface Routine {
   updated_at: string;
 }
 
+export type ActivitySource = "manual" | "suggested";
+
+export interface Activity {
+  id: string;
+  title: string;
+  category: string;
+  duration_minutes: number | null;
+  occurred_at: string;
+  source: ActivitySource;
+  created_at: string;
+}
+
+export interface Expense {
+  id: string;
+  amount: string;
+  currency: string;
+  category: string;
+  description: string | null;
+  occurred_at: string;
+  created_at: string;
+}
+
+export type BudgetPeriod = "daily" | "weekly" | "monthly";
+
+export interface Budget {
+  id: string;
+  category: string | null;
+  period: BudgetPeriod;
+  amount_limit: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export type MessageRole = "user" | "assistant" | "tool";
 
 export interface ChatMessage {

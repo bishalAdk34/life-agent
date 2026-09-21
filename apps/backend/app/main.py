@@ -1,7 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, chat, goals, interests, profile, routines, tasks, users
+from app.api import (
+    activities,
+    auth,
+    budgets,
+    chat,
+    expenses,
+    goals,
+    interests,
+    profile,
+    routines,
+    tasks,
+    users,
+)
 
 
 def create_app() -> FastAPI:
@@ -27,6 +39,9 @@ def create_app() -> FastAPI:
     app.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
     app.include_router(routines.router, prefix="/routines", tags=["routines"])
     app.include_router(chat.router, prefix="/chat", tags=["chat"])
+    app.include_router(activities.router, prefix="/activities", tags=["activities"])
+    app.include_router(expenses.router, prefix="/expenses", tags=["expenses"])
+    app.include_router(budgets.router, prefix="/budgets", tags=["budgets"])
 
     return app
 
