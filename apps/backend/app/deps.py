@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Generator
 
 from fastapi import Depends, HTTPException, status
@@ -18,12 +19,19 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
-def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
-    user_id = decode_access_token(token)
-    if user_id is None:
+def get_current_user_id(token: str = Depends(oauth2_scheme)) -> uuid.UUID:
+    subject = decode_access_token(token)
+    if subject is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return user_id
+    try:
+        return uuid.UUID(subject)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token subject",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

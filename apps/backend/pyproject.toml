@@ -5,9 +5,10 @@ description = "Life Agent backend (FastAPI + agent loop)"
 requires-python = ">=3.11"
 dependencies = [
     "alembic>=1.20.0",
+    "bcrypt>=5.0.0",
+    "email-validator>=2.3.0",
     "fastapi>=0.141.1",
     "google-genai>=2.24.0",
-    "passlib[bcrypt]>=1.7.4",
     "psycopg2-binary>=2.9.13",
     "pydantic-settings>=2.15.0",
     "python-jose[cryptography]>=3.5.0",
