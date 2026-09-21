@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.agent.context_builder import build_context
 from app.agent.providers.base import LLMProvider, Turn
 from app.agent.tools.registry import TOOL_REGISTRY
 from app.models.conversation import Conversation, ConversationMessage, MessageRole
@@ -12,7 +13,11 @@ SYSTEM_INSTRUCTION = (
     "You are Life Agent, a helpful personal assistant. Respond concisely and "
     "conversationally. Use the available tools to look up or modify the "
     "user's real tasks and schedule instead of guessing — never invent task "
-    "or schedule details you did not get from a tool."
+    "or schedule details you did not get from a tool. When the user states "
+    "an explicit fact or preference about themselves (e.g. 'I love hiking'), "
+    "call record_observation with kind='explicit' to remember it. You may "
+    "also record kind='derived' observations when you notice a pattern "
+    "yourself, with a confidence and source note."
 )
 
 MAX_TOOL_ROUNDS = 5
@@ -70,10 +75,15 @@ def handle_message(
 
     tool_declarations = [t.declaration for t in TOOL_REGISTRY.values()]
 
+    context = build_context(db, user_id)
+    system_instruction = (
+        f"{SYSTEM_INSTRUCTION}\n\n{context}" if context else SYSTEM_INSTRUCTION
+    )
+
     final_text = "Sorry, I couldn't complete that request."
     for _ in range(MAX_TOOL_ROUNDS):
         response = provider.generate(
-            turns, tools=tool_declarations, system_instruction=SYSTEM_INSTRUCTION
+            turns, tools=tool_declarations, system_instruction=system_instruction
         )
         if not response.tool_calls:
             final_text = response.text or ""

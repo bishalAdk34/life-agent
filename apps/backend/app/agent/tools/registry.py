@@ -20,6 +20,7 @@ from app.agent.tools.expense_tools import (
     handle_get_budget_status,
     handle_record_expense,
 )
+from app.agent.tools.memory_tools import RECORD_OBSERVATION, handle_record_observation
 from app.agent.tools.profile_tools import GET_USER_INTERESTS, handle_get_user_interests
 from app.agent.tools.schedule_tools import (
     GET_FREE_TIME,
@@ -50,4 +51,5 @@ TOOL_REGISTRY: dict[str, ToolDef] = {
     ),
     "record_expense": ToolDef(RECORD_EXPENSE, handle_record_expense),
     "get_budget_status": ToolDef(GET_BUDGET_STATUS, handle_get_budget_status),
+    "record_observation": ToolDef(RECORD_OBSERVATION, handle_record_observation),
 }
