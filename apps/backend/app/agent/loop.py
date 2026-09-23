@@ -72,6 +72,7 @@ def handle_message(
             conversation_id=conversation.id, role=MessageRole.user, content=message
         )
     )
+    db.commit()
 
     tool_declarations = [t.declaration for t in TOOL_REGISTRY.values()]
 
@@ -97,7 +98,11 @@ def handle_message(
             if tool is None:
                 result = {"error": f"unknown tool '{call.name}'"}
             else:
-                result = tool.handler(db, user_id, call.args)
+                try:
+                    result = tool.handler(db, user_id, call.args)
+                except Exception as exc:
+                    db.rollback()
+                    result = {"error": f"tool '{call.name}' failed: {exc}"}
             turns.append(
                 Turn(role="tool", tool_name=call.name, tool_response=result)
             )

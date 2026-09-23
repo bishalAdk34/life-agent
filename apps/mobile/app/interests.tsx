@@ -1,17 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { interestsApi } from "../src/api/interests";
+import { Button } from "../src/components/Button";
+import { Card } from "../src/components/Card";
+import { Input } from "../src/components/Input";
+import { ScreenContainer } from "../src/components/ScreenContainer";
 import { useAuth } from "../src/state/auth";
+import { colors, spacing, typography } from "../src/theme/theme";
 
 export default function InterestsScreen() {
   const { token } = useAuth();
@@ -38,20 +35,18 @@ export default function InterestsScreen() {
   });
 
   return (
-    <View style={styles.container}>
+    <ScreenContainer style={styles.container}>
       <View style={styles.row}>
-        <TextInput
+        <Input
           style={styles.input}
           value={label}
           onChangeText={setLabel}
           placeholder="e.g. hiking"
         />
-        <Pressable
-          style={styles.addButton}
+        <Button
+          title="Add"
           onPress={() => label.trim() && createMutation.mutate()}
-        >
-          <Text style={styles.addButtonText}>Add</Text>
-        </Pressable>
+        />
       </View>
 
       {isLoading ? (
@@ -60,47 +55,33 @@ export default function InterestsScreen() {
         <FlatList
           data={data ?? []}
           keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <View style={styles.item}>
+            <Card style={styles.item}>
               <Text style={styles.itemText}>{item.label}</Text>
               <Pressable onPress={() => deleteMutation.mutate(item.id)}>
                 <Text style={styles.deleteText}>Delete</Text>
               </Pressable>
-            </View>
+            </Card>
           )}
           ListEmptyComponent={<Text style={styles.empty}>No interests yet.</Text>}
         />
       )}
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 12 },
-  row: { flexDirection: "row", gap: 8 },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-  },
-  addButton: {
-    backgroundColor: "#2563eb",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    justifyContent: "center",
-  },
-  addButtonText: { color: "#fff", fontWeight: "600" },
+  container: { gap: spacing.sm },
+  row: { flexDirection: "row", gap: spacing.xs },
+  input: { flex: 1 },
+  list: { gap: spacing.xs },
   item: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
-  itemText: { fontSize: 16 },
-  deleteText: { color: "#dc2626" },
-  empty: { textAlign: "center", color: "#888", marginTop: 24 },
+  itemText: { ...typography.body, color: colors.ink },
+  deleteText: { color: colors.danger },
+  empty: { textAlign: "center", color: colors.inkSubtle, marginTop: spacing.lg },
 });
