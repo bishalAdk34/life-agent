@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_current_user_id, get_db
@@ -32,3 +32,22 @@ def set_budget(
         period=payload.period,
         amount_limit=payload.amount_limit,
     )
+
+
+@router.delete("/{budget_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_budget(
+    budget_id: uuid.UUID,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> None:
+    budget = (
+        db.query(Budget)
+        .filter(Budget.id == budget_id, Budget.user_id == user_id)
+        .first()
+    )
+    if budget is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Budget not found"
+        )
+    db.delete(budget)
+    db.commit()

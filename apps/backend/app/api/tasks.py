@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_current_user_id, get_db
-from app.models.task import Task, TaskStatus
+from app.models.task import Task, TaskPriority, TaskStatus
 from app.schemas.task import TaskCreate, TaskOut, TaskReschedule, TaskUpdate
 
 router = APIRouter()
@@ -23,6 +23,7 @@ def _get_owned_task(db: Session, task_id: uuid.UUID, user_id: uuid.UUID) -> Task
 @router.get("", response_model=list[TaskOut])
 def list_tasks(
     date_filter: date | None = Query(None, alias="date"),
+    priority: TaskPriority | None = Query(None),
     user_id: uuid.UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ) -> list[Task]:
@@ -31,6 +32,8 @@ def list_tasks(
         start = datetime.combine(date_filter, time.min, tzinfo=timezone.utc)
         end = datetime.combine(date_filter, time.max, tzinfo=timezone.utc)
         query = query.filter(Task.scheduled_for >= start, Task.scheduled_for <= end)
+    if priority is not None:
+        query = query.filter(Task.priority == priority)
     return query.order_by(Task.scheduled_for).all()
 
 
@@ -62,6 +65,8 @@ def update_task(
         task.description = payload.description
     if payload.scheduled_for is not None:
         task.scheduled_for = payload.scheduled_for
+    if payload.priority is not None:
+        task.priority = payload.priority
 
     db.commit()
     db.refresh(task)
@@ -95,3 +100,14 @@ def reschedule_task(
     db.commit()
     db.refresh(task)
     return task
+
+
+@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(
+    task_id: uuid.UUID,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> None:
+    task = _get_owned_task(db, task_id, user_id)
+    db.delete(task)
+    db.commit()

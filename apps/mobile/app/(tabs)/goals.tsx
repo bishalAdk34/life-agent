@@ -18,19 +18,24 @@ const STATUS_LABEL: Record<GoalStatus, string> = {
   done: "Completed",
 };
 
-// Backend Goal has no quarter/category fields, so the quarter pill and
-// Career/Health/Wealth dots below are shown for visual parity with the
-// design but do not affect goal creation.
-const CATEGORY_DOTS: { label: string; color: string }[] = [
+const CATEGORIES = [
   { label: "Career", color: colors.primary },
   { label: "Health", color: colors.success },
   { label: "Wealth", color: colors.tertiary },
 ];
 
+function getCurrentQuarter(): string {
+  const now = new Date();
+  const q = Math.ceil((now.getMonth() + 1) / 3);
+  return `Q${q} ${now.getFullYear()}`;
+}
+
 export default function GoalsScreen() {
   const { token } = useAuth();
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
+  const [category, setCategory] = useState<string | null>(null);
+  const [quarter, setQuarter] = useState(getCurrentQuarter());
 
   const { data, isLoading } = useQuery({
     queryKey: ["goals"],
@@ -39,9 +44,15 @@ export default function GoalsScreen() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => goalsApi.create(token as string, { title }),
+    mutationFn: () =>
+      goalsApi.create(token as string, {
+        title,
+        category: category ?? undefined,
+        quarter,
+      }),
     onSuccess: () => {
       setTitle("");
+      setCategory(null);
       queryClient.invalidateQueries({ queryKey: ["goals"] });
     },
   });
@@ -79,17 +90,22 @@ export default function GoalsScreen() {
           onChangeText={setTitle}
           placeholder="e.g. Learn FastAPI"
         />
-        <View style={styles.quarterPill}>
+        <Pressable style={styles.quarterPill}>
           <MaterialIcons name="event" size={14} color={colors.inkMuted} />
-          <Text style={styles.quarterPillText}>Q2 2025</Text>
-          <MaterialIcons name="expand-more" size={16} color={colors.inkMuted} />
-        </View>
+          <Text style={styles.quarterPillText}>{quarter}</Text>
+        </Pressable>
         <View style={styles.categoryRow}>
-          {CATEGORY_DOTS.map((c) => (
-            <View key={c.label} style={styles.categoryPill}>
+          {CATEGORIES.map((c) => (
+            <Pressable
+              key={c.label}
+              style={[styles.categoryPill, category === c.label && styles.categoryPillActive]}
+              onPress={() => setCategory(category === c.label ? null : c.label)}
+            >
               <View style={[styles.categoryDot, { backgroundColor: c.color }]} />
-              <Text style={styles.categoryPillText}>{c.label}</Text>
-            </View>
+              <Text style={[styles.categoryPillText, category === c.label && styles.categoryPillTextActive]}>
+                {c.label}
+              </Text>
+            </Pressable>
           ))}
         </View>
         <Button
@@ -128,7 +144,7 @@ export default function GoalsScreen() {
                   <Text style={styles.itemDescription}>{item.description}</Text>
                 ) : null}
                 <Text style={styles.itemMeta}>
-                  Updated {new Date(item.updated_at).toLocaleDateString()}
+                  {[item.category, item.quarter].filter(Boolean).join(" · ") || `Updated ${new Date(item.updated_at).toLocaleDateString()}`}
                 </Text>
               </View>
               <View
@@ -181,7 +197,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
     paddingVertical: 6,
     alignSelf: "flex-start",
-    opacity: 0.7,
   },
   quarterPillText: { ...typography.caption, color: colors.inkMuted },
   categoryRow: { flexDirection: "row", gap: spacing.xs },
@@ -193,10 +208,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: spacing.xs,
     paddingVertical: 4,
-    opacity: 0.7,
   },
+  categoryPillActive: { backgroundColor: colors.primary },
   categoryDot: { width: 6, height: 6, borderRadius: 3 },
   categoryPillText: { ...typography.caption, color: colors.inkMuted },
+  categoryPillTextActive: { color: colors.onPrimary },
   list: { gap: spacing.xs },
   item: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm },
   checkbox: { paddingTop: 2 },

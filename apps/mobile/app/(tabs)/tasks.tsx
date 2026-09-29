@@ -9,7 +9,7 @@ import { Card } from "../../src/components/Card";
 import { Input } from "../../src/components/Input";
 import { ScreenContainer } from "../../src/components/ScreenContainer";
 import { useAuth } from "../../src/state/auth";
-import type { TaskStatus } from "../../src/types";
+import type { TaskPriority, TaskStatus } from "../../src/types";
 import { colors, radius, spacing, typography } from "../../src/theme/theme";
 
 const STATUS_LABEL: Record<TaskStatus, string> = {
@@ -36,19 +36,24 @@ function isSameDay(a: Date, b: Date) {
   );
 }
 
+const PRIORITY_LABELS: Record<TaskPriority, string> = {
+  low: "Low",
+  normal: "Normal",
+  high: "High",
+};
+
 export default function TasksScreen() {
   const { token } = useAuth();
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
-
-  // Backend Task has no priority field, so the "High Priority" chip is
-  // shown for visual parity with the design but does not filter anything.
+  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | null>(null);
+  const [priority, setPriority] = useState<TaskPriority>("normal");
   const defaultSchedule = useMemo(() => roundedDefaultSchedule(), []);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: () => tasksApi.list(token as string),
+    queryKey: ["tasks", priorityFilter],
+    queryFn: () => tasksApi.list(token as string, priorityFilter ? { priority: priorityFilter } : undefined),
     enabled: !!token,
   });
 
@@ -57,9 +62,11 @@ export default function TasksScreen() {
       tasksApi.create(token as string, {
         title,
         scheduled_for: defaultSchedule.toISOString(),
+        priority,
       }),
     onSuccess: () => {
       setTitle("");
+      setPriority("normal");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
@@ -112,9 +119,18 @@ export default function TasksScreen() {
               })}
             </Text>
           </View>
-          <View style={styles.priorityPill}>
-            <Text style={styles.priorityPillText}>Normal</Text>
-          </View>
+          <Pressable
+            style={[styles.priorityPill, priority === "high" && styles.priorityPillHigh]}
+            onPress={() => {
+              const order: TaskPriority[] = ["low", "normal", "high"];
+              const next = order[(order.indexOf(priority) + 1) % order.length];
+              setPriority(next);
+            }}
+          >
+            <Text style={[styles.priorityPillText, priority === "high" && styles.priorityPillTextHigh]}>
+              {PRIORITY_LABELS[priority]}
+            </Text>
+          </Pressable>
         </View>
         <Button
           title="+ Add task"
@@ -136,8 +152,13 @@ export default function TasksScreen() {
             </Text>
           </Pressable>
         ))}
-        <Pressable style={styles.chip} onPress={() => {}}>
-          <Text style={styles.chipText}>High Priority</Text>
+        <Pressable
+          style={[styles.chip, priorityFilter === "high" && styles.chipActive]}
+          onPress={() => setPriorityFilter(priorityFilter === "high" ? null : "high")}
+        >
+          <Text style={[styles.chipText, priorityFilter === "high" && styles.chipTextActive]}>
+            High Priority
+          </Text>
         </Pressable>
       </View>
 
@@ -219,9 +240,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: spacing.xs,
     paddingVertical: 6,
-    opacity: 0.6,
   },
+  priorityPillHigh: { backgroundColor: colors.danger },
   priorityPillText: { ...typography.caption, color: colors.inkMuted },
+  priorityPillTextHigh: { color: colors.onPrimary },
   addButton: { marginTop: spacing.xxs },
   filterRow: { flexDirection: "row", gap: spacing.xs, flexWrap: "wrap" },
   chip: {

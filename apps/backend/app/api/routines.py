@@ -59,3 +59,22 @@ def update_routine(
     db.commit()
     db.refresh(routine)
     return routine
+
+
+@router.delete("/{routine_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_routine(
+    routine_id: uuid.UUID,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> None:
+    routine = (
+        db.query(Routine)
+        .filter(Routine.id == routine_id, Routine.user_id == user_id)
+        .first()
+    )
+    if routine is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Routine not found"
+        )
+    db.delete(routine)
+    db.commit()

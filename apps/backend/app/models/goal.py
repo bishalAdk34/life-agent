@@ -24,6 +24,8 @@ class Goal(Base):
     )
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    category: Mapped[str | None] = mapped_column(String, nullable=True)
+    quarter: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[GoalStatus] = mapped_column(
         Enum(GoalStatus, name="goal_status"),
         nullable=False,

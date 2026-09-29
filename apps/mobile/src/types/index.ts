@@ -24,12 +24,15 @@ export interface Goal {
   id: string;
   title: string;
   description: string | null;
+  category: string | null;
+  quarter: string | null;
   status: GoalStatus;
   created_at: string;
   updated_at: string;
 }
 
 export type TaskStatus = "pending" | "completed" | "skipped" | "rescheduled";
+export type TaskPriority = "low" | "normal" | "high";
 
 export interface Task {
   id: string;
@@ -37,6 +40,7 @@ export interface Task {
   title: string;
   description: string | null;
   status: TaskStatus;
+  priority: TaskPriority;
   scheduled_for: string;
   completed_at: string | null;
   created_at: string;
@@ -100,4 +104,16 @@ export interface ChatMessage {
 export interface ChatResponse {
   conversation_id: string;
   reply: string;
+}
+
+export type ObservationKind = "explicit" | "derived";
+
+export interface Observation {
+  id: string;
+  kind: ObservationKind;
+  text: string;
+  source: string | null;
+  confidence: number | null;
+  created_at: string;
+  updated_at: string;
 }

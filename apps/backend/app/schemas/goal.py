@@ -9,11 +9,15 @@ from app.models.goal import GoalStatus
 class GoalCreate(BaseModel):
     title: str
     description: str | None = None
+    category: str | None = None
+    quarter: str | None = None
 
 
 class GoalUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
+    category: str | None = None
+    quarter: str | None = None
     status: GoalStatus | None = None
 
 
@@ -23,6 +27,8 @@ class GoalOut(BaseModel):
     id: uuid.UUID
     title: str
     description: str | None
+    category: str | None
+    quarter: str | None
     status: GoalStatus
     created_at: datetime
     updated_at: datetime

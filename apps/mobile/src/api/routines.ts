@@ -15,4 +15,5 @@ export const routinesApi = {
   ) => api.post<Routine>("/routines", payload, token),
   update: (token: string, id: string, payload: Partial<Routine>) =>
     api.put<Routine>(`/routines/${id}`, payload, token),
+  delete: (token: string, id: string) => api.del(`/routines/${id}`, token),
 };

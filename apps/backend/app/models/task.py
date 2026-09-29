@@ -16,6 +16,12 @@ class TaskStatus(str, enum.Enum):
     rescheduled = "rescheduled"
 
 
+class TaskPriority(str, enum.Enum):
+    low = "low"
+    normal = "normal"
+    high = "high"
+
+
 class Task(Base):
     __tablename__ = "tasks"
 
@@ -32,6 +38,11 @@ class Task(Base):
         Enum(TaskStatus, name="task_status"),
         nullable=False,
         default=TaskStatus.pending,
+    )
+    priority: Mapped[TaskPriority] = mapped_column(
+        Enum(TaskPriority, name="task_priority"),
+        nullable=False,
+        default=TaskPriority.normal,
     )
     scheduled_for: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False

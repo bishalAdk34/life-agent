@@ -13,7 +13,7 @@ import { colors, radius, spacing, typography } from "../../src/theme/theme";
 type MaterialIconName = ComponentProps<typeof MaterialIcons>["name"];
 
 const NAV_ITEMS: {
-  href: "/chat" | "/profile" | "/interests" | "/goals" | "/tasks" | "/routines" | "/activities" | "/expenses";
+  href: "/chat" | "/profile" | "/interests" | "/goals" | "/tasks" | "/routines" | "/activities" | "/expenses" | "/observations";
   label: string;
   hint: string;
   icon: MaterialIconName;
@@ -24,6 +24,7 @@ const NAV_ITEMS: {
   { href: "/routines", label: "Routines", hint: "Recurring habits", icon: "schedule" },
   { href: "/activities", label: "Activities", hint: "Logged moments", icon: "favorite-border" },
   { href: "/expenses", label: "Expenses", hint: "Spending & budgets", icon: "account-balance-wallet" },
+  { href: "/observations", label: "Memory", hint: "What agent knows", icon: "memory" },
   { href: "/interests", label: "Interests", hint: "Things you like", icon: "star-border" },
   { href: "/profile", label: "Profile", hint: "Name & timezone", icon: "sync" },
 ];

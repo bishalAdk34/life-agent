@@ -9,6 +9,7 @@ from app.api import (
     expenses,
     goals,
     interests,
+    observations,
     profile,
     routines,
     tasks,
@@ -42,6 +43,7 @@ def create_app() -> FastAPI:
     app.include_router(activities.router, prefix="/activities", tags=["activities"])
     app.include_router(expenses.router, prefix="/expenses", tags=["expenses"])
     app.include_router(budgets.router, prefix="/budgets", tags=["budgets"])
+    app.include_router(observations.router, prefix="/observations", tags=["observations"])
 
     return app
 

@@ -7,4 +7,5 @@ export const budgetsApi = {
     token: string,
     payload: { category?: string; period: BudgetPeriod; amount_limit: number }
   ) => api.put<Budget>("/budgets", payload, token),
+  delete: (token: string, id: string) => api.del(`/budgets/${id}`, token),
 };

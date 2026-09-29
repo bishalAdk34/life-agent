@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.task import TaskStatus
+from app.models.task import TaskPriority, TaskStatus
 
 
 class TaskCreate(BaseModel):
@@ -11,12 +11,14 @@ class TaskCreate(BaseModel):
     description: str | None = None
     scheduled_for: datetime
     routine_id: uuid.UUID | None = None
+    priority: TaskPriority = TaskPriority.normal
 
 
 class TaskUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     scheduled_for: datetime | None = None
+    priority: TaskPriority | None = None
 
 
 class TaskReschedule(BaseModel):
@@ -31,6 +33,7 @@ class TaskOut(BaseModel):
     title: str
     description: str | None
     status: TaskStatus
+    priority: TaskPriority
     scheduled_for: datetime
     completed_at: datetime | None
     created_at: datetime
